@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장애물 피하기 게임</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #222;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: white;
+            margin: 20px 0 10px;
+        }
+
+        #game {
+            width: 800px;
+            height: 400px;
+            max-width: 95vw;
+            margin: auto;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(#87CEEB 70%, #5f9f3f 70%);
+            border: 5px solid white;
+        }
+
+        #player {
+            width: 50px;
+            height: 50px;
+            background: red;
+            position: absolute;
+            left: 100px;
+            bottom: 0;
+            border-radius: 10px;
+        }
+
+        .obstacle {
+            width: 40px;
+            height: 60px;
+            background: #333;
+            position: absolute;
+            bottom: 0;
+            right: -50px;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+
+        #message {
+            position: absolute;
+            width: 100%;
+            top: 150px;
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            display: none;
+        }
+
+        #restart {
+            margin-top: 15px;
+            padding: 10px 25px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        p {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🏃 장애물 피하기 게임</h1>
+
+    <div id="game">
+
+        <div id="score">점수: 0</div>
+
+        <div id="player"></div>
+
+        <div id="message">
+            GAME OVER!
+        </div>
+
+    </div>
+
+    <button id="restart">다시 시작</button>
+
+    <p>스페이스바를 눌러 점프하세요!</p>
+
+    <script>
+        // 캐릭터
+        const player = document.getElementById("player");
+
+        // 게임 화면
+        const game = document.getElementById("game");
+
+        // 점수
+        const scoreText = document.getElementById("score");
+
+        // 게임 오버 메시지
+        const message = document.getElementById("message");
+
+        // 다시 시작 버튼
+        const restartButton = document.getElementById("restart");
+
+
+        let jumping = false;
+        let gameOver = false;
+        let score = 0;
+        let obstacleX = 800;
+
+        // 점프 함수
+        function jump() {
+
+            if (jumping || gameOver) {
+                return;
+            }
+
+            jumping = true;
+
+            let jumpHeight = 0;
+
+            // 올라가기
+            const up = setInterval(function() {
+
+                jumpHeight += 8;
+
+                player.style.bottom = jumpHeight + "px";
+
+                if (jumpHeight >= 150) {
+
+                    clearInterval(up);
+
+                    // 내려가기
+                    const down = setInterval(function() {
+
+                        jumpHeight -= 8;
+
+                        player.style.bottom = jumpHeight + "px";
+
+                        if (jumpHeight <= 0) {
+
+                            clearInterval(down);
+
+                            player.style.bottom = "0px";
+                            jumping = false;
+                        }
+
+                    }, 20);
+                }
+
+            }, 20);
+        }
+
+
+        // 스페이스바로 점프
+        document.addEventListener("keydown", function(event) {
+
+            if (event.code === "Space") {
+
+                event.preventDefault();
+
+                jump();
+            }
+
+        });
+
+
+        // 장애물 만들기
+        function createObstacle() {
+
+            const obstacle = document.createElement("div");
+
+            obstacle.classList.add("obstacle");
+
+            game.appendChild(obstacle);
+
+            let position = 800;
+
+            const move = setInterval(function() {
+
+                if (gameOver) {
+                    clearInterval(move);
+                    return;
+                }
+
+                position -= 7;
+
+                obstacle.style.left = position + "px";
+
+                // 캐릭터와 장애물 위치
+                const playerLeft = 100;
+                const playerRight = 150;
+
+                const obstacleLeft = position;
+                const obstacleRight = position + 40;
+
+                // 충돌 검사
+                if (
+                    obstacleLeft < playerRight &&
+                    obstacleRight > playerLeft &&
+                    parseInt(player.style.bottom) < 50
+                ) {
+
+                    endGame();
+
+                    clearInterval(move);
+                }
+
+                // 장애물이 화면 밖으로 나가면 제거
+                if (position < -50) {
+
+                    clearInterval(move);
+
+                    obstacle.remove();
+
+                    score++;
+
+                    scoreText.textContent = "점수: " + score;
+                }
+
+            }, 20);
+        }
+
+
+        // 일정한 시간마다 장애물 생성
+        let obstacleTimer = setInterval(function() {
+
+            if (!gameOver) {
+                createObstacle();
+            }
+
+        }, 1500);
+
+
+        // 게임 오버
+        function endGame() {
+
+            gameOver = true;
+
+            message.style.display = "block";
+        }
+
+
+        // 다시 시작
+        restartButton.addEventListener("click", function() {
+
+            // 기존 장애물 삭제
+            document.querySelectorAll(".obstacle").forEach(function(obstacle) {
+                obstacle.remove();
+            });
+
+            gameOver = false;
+            jumping = false;
+            score = 0;
+
+            player.style.bottom = "0px";
+
+            scoreText.textContent = "점수: 0";
+
+            message.style.display = "none";
+
+        });
+    </script>
+
+</body>
+</html>
